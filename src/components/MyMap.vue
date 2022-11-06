@@ -51,7 +51,13 @@ export default defineComponent({
       let url = 'https://api.geoapify.com/v1/geocode/search?text=' + encodedAddress + '&apiKey=' + apiKey;
 
       axios.get(url).then((response) => {
-        map.setView(this.getCoordinates(response));
+        const newZoomLevel: number = 50;
+        let latLon: LatLng = this.getCoordinates(response) 
+
+        map.setView(latLon, newZoomLevel);
+
+        let marker = new leaflet.Marker(latLon);
+        marker.addTo(map);
       });
     }
   }
