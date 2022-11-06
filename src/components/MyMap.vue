@@ -10,11 +10,12 @@ export default defineComponent({
   name: 'MyMap',
 
   data() {
-      return {
-        address: '' as String,
-        requested: false as boolean,
-        map: null,
-      }
+    return {
+      address: '' as String,
+      requested: false as boolean,
+      map: null,
+      autocompleteOpts: [] as Array<string>,
+    }
   },
 
   setup() {
@@ -52,12 +53,34 @@ export default defineComponent({
 
       axios.get(url).then((response) => {
         const newZoomLevel: number = 50;
-        let latLon: LatLng = this.getCoordinates(response) 
+        let latLon: LatLng = this.getCoordinates(response);
 
         map.setView(latLon, newZoomLevel);
 
         let marker = new leaflet.Marker(latLon);
         marker.addTo(map);
+      });
+    },
+
+    requestAutocomplete(address: string) {
+      const apiKey = '';
+      let encodedAddress = encodeURIComponent(address);
+
+      if (apiKey == '')
+        return console.error("Add your own geoapify API key!");
+
+      if (address == '')
+        return;
+
+      let url = 'https://api.geoapify.com/v1/geocode/autocomplete?text=' + encodedAddress + '&apiKey=' + apiKey;
+
+      axios.get(url).then((response) => {
+        this.autocompleteOpts = [];
+
+        for (let i = 0; i < response.data.features.length; i++)
+        {
+          this.autocompleteOpts.push(response.data.features[i].properties.formatted);
+        }
       });
     }
   }
@@ -69,7 +92,15 @@ export default defineComponent({
   <div style="padding-bottom: 15px;">
     <p>Enter the desired address</p>
     <input v-model="address" placeholder="Type here..."/>
-    <button @click="requestForwardGeocoding(address)">Send</button>
+
+    <button @click="requestAutocomplete(address)">Show Autcomplete</button>
+    <button @click="requestForwardGeocoding(address)">Navigate to</button>
+
+    <ul v-if="autocompleteOpts.length > 0">
+      <li v-for="opt in autocompleteOpts" style="text-align: left;">
+        {{opt}}
+      </li>
+    </ul>
   </div>
 
   <div v-if="requested">
